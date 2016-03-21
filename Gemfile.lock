@@ -40,12 +40,14 @@ GEM
     unf (0.1.4)
       unf_ext
     unf_ext (0.0.7.2)
+    workers (0.6.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   kubeclient
+  workers
 
 BUNDLED WITH
    1.11.2

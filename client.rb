@@ -61,6 +61,5 @@ rc.spec.replicas = '6'
 
 
 #client.update_replication_controller rc
-@heapster_api_uri = 'https://104.154.39.146/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/'
-getHeapsterNodeUsageMetrics @heapster_api_uri, auth_options
-getHeapsterPodsUsageMetrics @heapster_api_uri, auth_options
+#getHeapsterNodeUsageMetrics @heapster_api_uri, auth_options
+#getHeapsterPodsUsageMetrics @heapster_api_uri, auth_options

@@ -1,0 +1,18 @@
+influxdb_development:
+  adapter: influxdb
+  databasename: test
+  username:
+  password: 
+  server: localhost
+influxdb_production:
+  adapter: influxdb
+  databasename: metrics_db
+  username: root
+  password: r00tMyPr0ject
+  server: 104.154.96.252
+influxdb_staging:
+  adapter: influxdb
+  databasename: metrics_db
+  username: root
+  password: r00tMyPr0ject
+  server: 104.154.96.252

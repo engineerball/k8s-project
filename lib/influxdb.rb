@@ -1,21 +1,40 @@
 require 'influxdb'
+require 'yaml'
 
+class Influxdb
+	def createInstance()
+		config = YAML.load_file('../conf/database.yaml')
+		
+		if @environment == 'production'
+			@server = config['influxdb_production']['server']
+			@username = config['influxdb_production']['username']
+			@password = config['influxdb_production']['password']
+			@database = config['influxdb_production']['databasename']
+		elsif @environment == 'staging'
+			@server = config['influxdb_development']['server']
+			@username = config['influxdb_development']['username']
+			@password = config['influxdb_development']['password']
+			@database = config['influxdb_development']['databasename']
+		else
+			@server = config['influxdb_development']['server']
+			@username = config['influxdb_development']['username']
+			@password = config['influxdb_development']['password']
+			@database = config['influxdb_development']['databasename']
+		end
 
-  database = 'site_development'
-name = 'foobar'
-influxdb = InfluxDB::Client.new host: "localhost", database: database
-#  influxdb.create_database(database)
+		@influxdb = InfluxDB::Client.new host: @server, database: @database, username: @username, password: @password
+	end
 
-Value = (0..360).to_a.map {|i| Math.send(:sin, i / 10.0) * 10 }.each
+	def createDB()
 
-loop do
-  data = {
-    values: { value: Value.next },
-    tags: { wave: 'sine' } # tags are optional
-  }
+	end
 
-  influxdb.write_point(name, data)
+	def writeQuery(name, data)
+		
+	end
 
-  sleep 1
+	def getQuery
+
+	end
+
 end
-
