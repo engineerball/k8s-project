@@ -1,0 +1,2 @@
+gem 'kubeclient'
+gem 'yaml'
