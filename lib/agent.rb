@@ -1,44 +1,36 @@
 require 'json'
-require 'workers'
+require 'daemons'
 require_relative 'heapster'
+require_relative 'influxdb'
 
 class MetricAgent
 
-  @scheduler
 	def initialize(auth_options)
 		@auth_options = auth_options
 		@heapster = Heapster.new auth_options
-		pool = Workers::Pool.new(:size => 100)
-		@scheduler = Workers::Scheduler.new(:pool => pool)
-
+		@influxdb = Influxdb.new
 	end
 
-	def handleAgent(client)
-    loop do
-			@heapster.send(:client)
-			sleep 60
-    end
+	def writeDB(data)
+		@influxdb.writeQuery(data)
   end
 
-	def startAgent(functionname)      
-  	timer = Workers::PeriodicTimer.new(1) do
-  		puts 'Hello world many times'
-		end
-		sleep 10
+	def startNodesAgent(functionname) 
+		data = Hash.new 
+		data = {
+			'type' => 'nodes',
+			'metrics' => @heapster.send(functionname)
+		}     
+  	writeDB(data)
 	end
 
-	def test_function
-		chan = channel!(Integer)
-
-		#go routine
-		go! do
-		  puts 'hello, world!'
-		end
-
-		#wait around
-		loop do
-			sleep 60
-			puts 'b'
-		end
+	def startPodsAgent(functionname)
+		data = Hash.new
+		data = {
+			'type' => 'pods',
+			'metrics' => @heapster.send(functionname)
+		}
+		writeDB(data)
 	end
+
 end

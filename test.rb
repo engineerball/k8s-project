@@ -7,7 +7,14 @@ auth_options = {
 		    username: 'admin'
 		}
 
-k8sclient = K8sclient.new
-heapsterclient = Heapster.new auth_options
-agent = MetricAgent.new auth_options
-agent.startAgent('getHeapsterNodeUsageMetrics')
+#k8sclient = K8sclient.new
+#heapsterclient = Heapster.new auth_options
+#heapsterclient.getHeapsterNodeUsageMetrics
+#agent = MetricAgent.new auth_options
+#agent.handleAgent('getHeapsterNodeUsageMetrics')
+
+influxclient = Influxdb.new
+p influxclient.getQueryMetric('cpu', 'nodes')
+p influxclient.getQueryMetric('memory', 'nodes')
+p influxclient.getQueryMetric('cpu', 'pods')
+p influxclient.getQueryMetric('memory', 'pods')

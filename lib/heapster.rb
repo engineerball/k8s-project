@@ -36,9 +36,9 @@ class Heapster
 		result = createClientRequest uri 
 		data = JSON.parse result
 		data.each do |node|
-			p node_name = node['name']
-			p node_cpu_usage = node['cpuUsage']
-			p node_mem_usage = node['memUsage']
+			node_name = node['name']
+			node_cpu_usage = node['cpuUsage']
+			node_mem_usage = node['memUsage']
 		end
 		return data
 	end
@@ -48,7 +48,7 @@ class Heapster
 		result = createClientRequest uri
 		data = JSON.parse result
 		data.each do |node|
-			p node
+			node
 		end
 		return data
 	end

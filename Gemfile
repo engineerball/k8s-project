@@ -1,2 +1,2 @@
 gem 'kubeclient'
-gem 'workers'
+gem 'daemons'
