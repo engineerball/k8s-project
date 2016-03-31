@@ -50,4 +50,11 @@ class K8sclient
 
 		@CLIENT = Kubeclient::Client.new 'https://104.154.39.146/api/', "v1", ssl_options: ssl_options, auth_options: @auth_options
 	end
+
+	def getTotalRC(rc_name, rc_namespace = 'default')
+		#p pods = @CLIENT.get_pods(label_selector: "name=#{label}")
+		rc = @CLIENT.get_replication_controller(rc_name, rc_namespace)
+		return rc.spec.replicas
+	
+	end
 end
