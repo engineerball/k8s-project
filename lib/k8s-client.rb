@@ -28,33 +28,47 @@ class K8sclient
 						unless val['user']['client-key-data'].nil? || @client_key = val['user']['client-key-data'] 
 						end
 		end
-		#users.each_with_index {|val,index|  @client_key = val['user']['client-key-data']}
 
 		ssl_options = {
-		##  client_cert: @client_cert,
-		#  client_cert: OpenSSL::X509::Certificate.new(@client_cert),
-		##  client_key:  @client_key,
-		#  client_key:  OpenSSL::PKey::RSA.new(@client_key),
-		#  ca_file:     @ca,
-		# client_cert: OpenSSL::X509::Certificate.new(File.read('ssl/client.crt')),
-		#  client_key:  OpenSSL::PKey::RSA.new(File.read('ssl/client.key')),
 		  ca_file:     'ssl/ca.crt',
-		#  verify_ssl:  OpenSSL::SSL::VERIFY_PEER
-		verify_ssl: OpenSSL::SSL::VERIFY_NONE
+			verify_ssl: OpenSSL::SSL::VERIFY_NONE
 		}
 
 		@auth_options = {
-		    password: 'fdYveJAxWvNvbqNc',
+		    password: 'dS6z2MLZ6yPEGovO',
 		    username: 'admin'
 		}
 
-		@CLIENT = Kubeclient::Client.new 'https://104.154.39.146/api/', "v1", ssl_options: ssl_options, auth_options: @auth_options
+		@CLIENT = Kubeclient::Client.new 'https://146.148.82.110/api/', "v1", ssl_options: ssl_options, auth_options: @auth_options
 	end
 
 	def getTotalRC(rc_name, rc_namespace = 'default')
 		#p pods = @CLIENT.get_pods(label_selector: "name=#{label}")
 		rc = @CLIENT.get_replication_controller(rc_name, rc_namespace)
 		return rc.spec.replicas
-	
 	end
+
+	def getTotalPods(namespace = 'defualt')
+		pods_name = Hash.new(0)
+		pods = @CLIENT.get_pods(namespace: 'default')
+		pods.each_with_index do |(key,value),index|
+			pods_name[index] = key.metadata.name
+		end
+		return pods_name
+	end
+
+	def getPodsCPUCore(pods_name, pods_namespace = 'default')
+		pods = @CLIENT.get_pod pods_name, pods_namespace
+		container = pods.spec.containers
+		h1 = Hash[*container.flatten(1)]
+		cpu_core = h1[:resources][:requests][:cpu]
+
+		# Convert CPU millicore to core
+		if cpu_core.include? 'm'
+			cpu_core = cpu_core.to_i * 0.001
+		end
+		return cpu_core
+	end
+
+#End class	
 end

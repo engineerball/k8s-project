@@ -6,6 +6,7 @@ require 'net/https'
 class Heapster
 	@auth_options
 	def initialize(auth_options)
+		@kubernates_api = 'https://104.154.39.146/api/v1/'
 		@heapster_api_uri = 'https://104.154.39.146/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/'
 		@auth_options = auth_options
 	end
@@ -24,8 +25,15 @@ class Heapster
 		return data
 	end
 
-	def getHeapsterClusterCPUUsageMetrics()
-		uri = @heapster_api_uri + "model/metrics/cpu-usage"
+	def getHeapsterClusterMemoryLimitMetrics()
+		uri = @heapster_api_uri + "model/metrics/memory-limit"
+		result = createClientRequest uri
+		data = JSON.parse result
+		return data
+	end
+
+	def getHeapsterClusterCPULimitMetrics()
+		uri = @heapster_api_uri + "model/metrics/cpu-limit"
 		result = createClientRequest uri 
 		data = JSON.parse result
 		return data
@@ -51,6 +59,16 @@ class Heapster
 			node
 		end
 		return data
+	end
+
+	def getHeapsterCPUPodsRequestMetrics(namespace_name='default', podname)
+		uri = @kubernates_api + "namespaces/#{namespace_name}/pods/#{podname}"
+		#uri = @heapster_api_uri + "model/namespaces/#{namespace_name}/pods/"
+		result = createClientRequest uri
+		data = JSON.parse result
+		request = data['spec']['containers'][0]['resources']['requests']
+		cpu = request['cpu']
+		return cpu
 	end
 
 	def createClientRequest(uri)

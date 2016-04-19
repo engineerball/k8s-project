@@ -12,5 +12,5 @@ agent = MetricAgent.new auth_options
 loop do
 	agent.startNodesAgent('getHeapsterNodeUsageMetrics')
 p	agent.startPodsAgent('getHeapsterPodsUsageMetrics')
-	sleep 30
+	sleep 60
 end

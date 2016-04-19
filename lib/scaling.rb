@@ -5,6 +5,7 @@ class Scaling
 	def initialize()
 		@@redis = Redis.new(:host => $REDIS_HOST, :port => $REDIS_PORT)
 		@@influxclient = Influxdb.new
+		@@k8sclient = K8sclient.new
 
 	end
 
@@ -29,45 +30,57 @@ class Scaling
 		previous_metric = @@redis.get('current_metric').to_i
 		current_metric = @@influxclient.getQueryMetric(metric_type, node_type)
 		scaling_number = min
-		step = 1
-		while (current_metric >= upper_treshold) do
-			puts "step #{step}
+
+		current_node =  @@k8sclient.getTotalRC('my-nginx', 'default')
+		scaling_node_to = current_node
+
+		while (current_metric.to_i >= upper_treshold) do
+			puts "SCALE Up
 				current_metric = #{current_metric}
 				previous_metric = #{previous_metric}"
+
+				current_metric = @@influxclient.getQueryMetric(metric_type, node_type)
+				previous_metric = @@redis.get('current_metric').to_i
 			if current_metric >= previous_metric
-				scaling_number = scaling_step * step
-				if scaling_number > max
-					scaling_number = max
+				scaling_node_to = scaling_node_to + scaling_step
+				if scaling_node_to > max
+					scaling_node_to = max
 				end
-				p cmd = "kubectl scale --replicas=#{scaling_number} rc my-nginx"
+				p cmd = "kubectl scale --replicas=#{scaling_node_to} rc my-nginx"
 				system(cmd)
-			elsif current_metric < previous_metric
-				scaling_number = scaling_number * (step / scaling_step)
-				if scaling_number < min
-					scaling_number = min
+			elsif current_metric < previous_metric && ((current_metric < upper_treshold) && (current_metric > lower_treshold))
+				scaling_node_to = scaling_node_to - scaling_step
+				if scaling_node_to < min
+					scaling_node_to = min
 				end
-				p cmd = "kubectl scale --replicas=#{scaling_number} rc my-nginx"
+				p cmd = "kubectl scale --replicas=#{scaling_node_to} rc my-nginx"
 				system(cmd)
 			end
 			# Update current_metric
-			current_metric = @@influxclient.getQueryMetric(metric_type, node_type)			
-			step +=1
-			sleep 60
+			#current_metric = @@influxclient.getQueryMetric(metric_type, node_type)
+			@@redis.set('current_metric', current_metric)			
+			sleep 30
 		end
 
-		while (current_metric <= lower_treshold) do
-			scaling_number = scaling_number * (step / scaling_step)
-			puts "current_metric = #{current_metric}
-				previous_metric = #{previous_metric}"
-			if scaling_number < min
-					scaling_number = min
-			end
-			cmd = "kubectl scale --replicas=#{min} rc my-nginx"
-			system(cmd)
-
+		current_node =  @@k8sclient.getTotalRC('my-nginx', 'default')
+		scaling_node_to = current_node
+		begin
 			current_metric = @@influxclient.getQueryMetric(metric_type, node_type)
-			step +=1 
-			sleep 60
-		end
+			previous_metric = @@redis.get('current_metric').to_i
+			scaling_node_to = scaling_node_to - scaling_step
+			puts "SCALE Down
+			current_metric = #{current_metric}, previous_metric = #{previous_metric}, node= #{current_node}"
+			if scaling_node_to < min
+					scaling_node_to = min
+			end
+			if scaling_node_to != min
+				p cmd = "kubectl scale --replicas=#{min} rc my-nginx"
+				system(cmd)
+				sleep 30
+			end
+
+			#current_metric = @@influxclient.getQueryMetric(metric_type, node_type)
+			@@redis.set('current_metric', current_metric)
+		end while (current_metric < lower_treshold)
 	end
 end

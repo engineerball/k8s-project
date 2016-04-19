@@ -42,21 +42,20 @@ ssl_options = {
 verify_ssl: OpenSSL::SSL::VERIFY_NONE
 }
 auth_options = {
-    password: 'fdYveJAxWvNvbqNc',
+    password: 'dS6z2MLZ6yPEGovO',
     username: 'admin'
 }
 
-CLIENT = Kubeclient::Client.new 'https://104.154.39.146/api/', "v1", ssl_options: ssl_options, auth_options: auth_options
+CLIENT = Kubeclient::Client.new 'https://146.148.82.110/api/', "v1", ssl_options: ssl_options, auth_options: auth_options
 
-rc = CLIENT.get_replication_controller 'my-nginx', 'default'
-
-rc = Kubeclient::ReplicationController.new
-rc.metadata = {}
-rc.metadata.name = 'my-nginx'
-rc.metadata.namespace = 'default'
-rc.spec = {}
-rc.spec.replicas = '6'
-
+rc = CLIENT.get_replication_controller 'wordpress', 'default'
+#puts rc
+#p rc.spec.replicas
+#pods = CLIENT.get_pod 'kube2sky', 'kube-system'
+pods = CLIENT.get_pods(namespace: 'default')
+pods.each do |k,v|
+puts k.metadata.name
+end
 
 
 

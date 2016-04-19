@@ -1,4 +1,4 @@
 gem 'kubeclient'
 gem 'daemons'
-gem 'symbolic'
+#gem 'symbolic'
 gem 'redis'
