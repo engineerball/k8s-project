@@ -83,4 +83,24 @@ class Scaling
 			@@redis.set('current_metric', current_metric)
 		end while (current_metric < lower_treshold)
 	end
+
+	def getNumberScaleUp(data_metric, target = 100)
+		target_num_of_pods = 1
+		current_pods_cpu_utilization = 0
+		
+		if data_metric
+			data_metric.each do |pod, cpu|
+				current_pods_cpu_utilization += cpu
+			end
+			if current_pods_cpu_utilization
+				target_num_of_pods = (current_pods_cpu_utilization.to_f / target.to_f).ceil
+			end
+		end
+		if target_num_of_pods == 0
+			target_num_of_pods = 1
+		end
+		return target_num_of_pods
+	end
+
+	#End class
 end

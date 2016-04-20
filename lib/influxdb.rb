@@ -9,6 +9,7 @@ class Influxdb
 	def initialize()
 		@influxdb = InfluxDB::Client.new host: $influxdb_server, port: $influxdb_port, database: $influxdb_database, username: $influxdb_username, password: $influxdb_password 
 		@influxdb_http_uri = "http://#{$influxdb_server}:#{$influxdb_port}/db/#{$influxdb_database}/series?u=#{$influxdb_username}&p=#{$influxdb_password}"
+		@time_select = 0
 	end
 
 	def createDB()
@@ -82,8 +83,11 @@ class Influxdb
 	def getPodsCPUUsagePercentByPod(pods_label)
 		pods_label =~ /(.*)-(.*)?/
 		pods_filter = $1
-		query = "SELECT difference(value) AS value FROM \"cpu\/usage_ns_cumulative\" WHERE labels =~ /.*#{pods_filter}.*/ AND time > now() - 3m GROUP BY time(1m) ORDER ASC LIMIT 2"
+		data = Array.new(0)
+
+		puts query = "SELECT difference(value) AS value FROM \"cpu\/usage_ns_cumulative\" WHERE labels =~ /.*#{pods_filter}.*/ AND time > now() - 150s GROUP BY time(1m)"
 		data = makeHttpRequest(query)
+		#puts @time_select = adjustTime(data)
 		return data
 	end
 
@@ -91,7 +95,7 @@ class Influxdb
 		#pods_label =~ /(.*)-(.*)?/
 		#pods_filter = $1
 		data = Hash.new(0)
-		query = "select difference(value) as value from \"cpu\/usage_ns_cumulative\" where labels =~ /.*#{pods_label}.*/ and time > now() - 3m group by pod_name order asc"
+		query = "select difference(value) as value from \"cpu\/usage_ns_cumulative\" where labels =~ /.*#{pods_label}.*/ and time > now() - 150s group by pod_name order asc"
 		result = makeHttpRequest(query)
 		result[0]['points'].each do |time, value, pod_name|
 		 	data[pod_name] = value
@@ -99,5 +103,32 @@ class Influxdb
 		return data
 	end
 
+	def adjustTime(dataset)
+		p dataset[0]
+		epoch_time = 0
+		item = 1
+		if dataset[0]
+			dataset[0]['points'].each  do |time, value|
+				#epoch_time = time
+				if value
+					item +=1
+				end
+			end
+		else
+			puts "dataset is nil"
+		end
+		
+		puts "Total item = #{item}"
+		
+		if item.to_i % 2 == 1
+			puts "Sleep 30"
+			sleep 30
+			return false
+		elsif item.to_i % 2 == 0
+			puts "Sleep 60"
+			sleep 60
+			return true
+		end
+	end
 	#End class
 end

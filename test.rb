@@ -30,22 +30,48 @@ scal = Scaling.new
 #	p total_pods = k8sclient.getTotalRC('my-nginx', 'default')
 #	sleep 60
 #end
-total_pods = k8sclient.getTotalPods 'default'
-rawcpu = Hash.new(0)
-total_pods.each do |index,pod|
-	rawcpu[pod] = k8sclient.getPodsCPUCore pod
-end
-
 agent = Agent.new auth_options
-rawcpu.each do |podname,podcpucore|
-	cpuusage = agent.getPodsCPUUsage podname
-	puts cpuusage
-end
-pod_cpu = Hash.new(0)
-pod_cpu = influxclient.getPodsCPUUsagePercentByPods('my-nginx')
-puts pod_cpu_usage = agent.calculateCPUUsage(pod_cpu)
-puts pod_avg_cpu_usage = agent.getAveragePodsCPUUsage(pod_cpu_usage)
 
+total_pods = k8sclient.getTotalPods 'default'
+
+#Get random pods for adjust time to get data from influxdb
+random_pod = total_pods[rand(total_pods.length)]
+p random_pod
+agent.adjustTime random_pod
+
+
+rawcpu = Hash.new(0)
+pod_cpu = Hash.new(0)
+
+while true
+
+	#Get random pods for adjust time to get data from influxdb
+	random_pod = total_pods[rand(total_pods.length)]
+	p random_pod
+	
+	flag_adjusttime = agent.adjustTime random_pod
+	# True or False
+	if flag_adjusttime
+		total_pods.each do |index,pod|
+			rawcpu[pod] = k8sclient.getPodsCPUCore pod
+		end
+
+		rawcpu.each do |podname,podcpucore|
+			cpu_usage = agent.getPodsCPUUsage podname
+
+			puts "#{podname} #{cpu_usage}"
+		end
+
+		pod_cpu = influxclient.getPodsCPUUsagePercentByPods('my-nginx')
+		puts pod_cpu_usage = agent.calculateCPUUsage(pod_cpu)
+		puts pod_avg_cpu_usage = agent.getAveragePodsCPUUsage(pod_cpu_usage)
+		puts scal.getNumberScaleUp(pod_cpu_usage, '30')
+		rawcpu.clear
+		pod_cpu.clear
+	end
+	puts "== Loop interval =="
+	sleep 60
+end
 #agent = Agent.new
 
 #agent.getPodsCPUUsage 
