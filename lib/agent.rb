@@ -36,16 +36,16 @@ class Agent
 	end
 
 	def getPodsCPUUsage(pods_label)
-		pod = @k8sclient.getTotalPods(pods_label)
+		pod = @k8sclient.getTotalPodByName(pods_label)
 		pod_data = Hash.new(0)
 		pod.each do |index, pod_name|
 			pod_name =~ /(.*)-(.*)?/
 			pods_filter = $1
 
-			query = "SELECT pod_name, value FROM \"cpu\/usage\" WHERE pod_name =~ /.*#{pods_filter}.*/ AND time > now() - 150s GROUP BY pod_name ORDER BY time DESC LIMIT 2"
+			query = "SELECT pod_name, value FROM \"cpu\/usage\" WHERE pod_name =~ /.*#{pod_name}.*/ AND time > now() - 150s GROUP BY pod_name ORDER BY time DESC LIMIT 2"
 			data = @influxdb.query(query)
 			result = data['results'][0]['series']
-			 result.each_with_index do |(key, value), index|
+			result.each_with_index do |(key, value), index|
 			   pod_name = key['tags']['pod_name']
 				 key['values'][0][1]
 			   cpu_delta = key['values'][0][1] - key['values'][1][1]

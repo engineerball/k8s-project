@@ -14,30 +14,30 @@ class K8sclient
 		@client_key = nil
 		users = nil
 		user = nil
-
-		kubeconfig = YAML.load_file('/home/vagrant/.kube/config')
-		clusters = kubeconfig['clusters']
-		clusters.each_with_index {|val, index| cluster = val }
-		@ca =  cluster['cluster']['certificate-authority-data']
-		users = kubeconfig['users']
-		users.each_with_index do |val,index|
-						unless val['user']['client-certificate-data'].nil? || @client_cert = val['user']['client-certificate-data']
-						end
-		end
-		users.each_with_index do |val,index|
-						unless val['user']['client-key-data'].nil? || @client_key = val['user']['client-key-data']
-						end
-		end
+		#
+		# kubeconfig = YAML.load_file('/home/vagrant/.kube/config')
+		# clusters = kubeconfig['clusters']
+		# clusters.each_with_index {|val, index| cluster = val }
+		# @ca =  cluster['cluster']['certificate-authority-data']
+		# users = kubeconfig['users']
+		# users.each_with_index do |val,index|
+		# 				unless val['user']['client-certificate-data'].nil? || @client_cert = val['user']['client-certificate-data']
+		# 				end
+		# end
+		# users.each_with_index do |val,index|
+		# 				unless val['user']['client-key-data'].nil? || @client_key = val['user']['client-key-data']
+		# 				end
+		# end
 
 		ssl_options = {
-		  ca_file:     'ssl/ca.crt',
+		  # ca_file:     'ssl/ca.crt',
 			verify_ssl: OpenSSL::SSL::VERIFY_NONE
 		}
-
-		@auth_options = {
-		    password: 'HQtBwDSEk4eLG8tc',
-		    username: 'admin'
-		}
+		#
+		# @auth_options = {
+		#     password: 'HQtBwDSEk4eLG8tc',
+		#     username: 'admin'
+		# }
 
 		@CLIENT = Kubeclient::Client.new $k8s_api, "v1", ssl_options: ssl_options, auth_options: $k8s_auth
 	end
@@ -51,6 +51,15 @@ class K8sclient
 	def getTotalPods(namespace = 'defualt')
 		pods_name = Hash.new(0)
 		pods = @CLIENT.get_pods(namespace: 'default')
+		pods.each_with_index do |(key,value),index|
+			pods_name[index] = key.metadata.name
+		end
+		return pods_name
+	end
+
+	def getTotalPodByName(name)
+		pods_name = Hash.new(0)
+		pods = @CLIENT.get_pods(label_selector: "app=#{name}")
 		pods.each_with_index do |(key,value),index|
 			pods_name[index] = key.metadata.name
 		end

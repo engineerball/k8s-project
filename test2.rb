@@ -1,6 +1,6 @@
 require_relative 'lib/include'
 
-
+target_rc = "my-nginx"
 k8sclient = K8sclient.new
 heapsterclient = Heapster.new
 #p heapsterclient.getHeapsterNodeUsageMetrics
@@ -14,6 +14,7 @@ scal = Scaling.new
 agent = Agent.new
 
 total_pods = k8sclient.getTotalPods 'default'
+pods_byname = k8sclient.getTotalPodByName target_rc
 
 #Get random pods for adjust time to get data from influxdb
 #random_pod = total_pods[rand(total_pods.length)]
@@ -35,32 +36,32 @@ pod_cpu = Hash.new(0)
 
 		#rawcpu.each do |podname,podcpucore|
 		while true
-			puts pod_cpu_usage = agent.getPodsCPUUsage('default')
+			pod_cpu_usage = agent.getPodsCPUUsage(target_rc)
 
-		#	puts "#{podname} #{cpu_usage}"
-		#end
+			#	puts "#{podname} #{cpu_usage}"
+			#end
 
-		#pod_cpu = influxclient.getPodsCPUUsagePercentByPods('my-nginx')
-		#puts pod_cpu_usage = agent.calculateCPUUsage(pod_cpu)
-		pod_avg_cpu_usage = agent.getAveragePodsCPUUsage(pod_cpu_usage)
-		scale_to = scal.getNumberScaleUp(pod_cpu_usage, '20')
-		puts "Pods average = #{pod_avg_cpu_usage}
-		Scale to target #{scale_to}"
-		total_pods = k8sclient.getTotalPods('default').count
-		if total_pods < scale_to
-			puts "Scale up"
-			scal.scaleActions('my-nginx', scale_to)
-			sleep 180
-		elsif total_pods > scale_to
-			puts "Scale down"
-			scal.scaleActions('my-nginx', scale_to)
-			sleep 300
-		else
-			sleep 60
-		end
+			#pod_cpu = influxclient.getPodsCPUUsagePercentByPods('my-nginx')
+			#puts pod_cpu_usage = agent.calculateCPUUsage(pod_cpu)
+			pod_avg_cpu_usage = agent.getAveragePodsCPUUsage(pod_cpu_usage)
+			scale_to = scal.getNumberScaleUp(pod_cpu_usage, '20')
+			puts "Pods average = #{pod_avg_cpu_usage}
+			Scale to target #{scale_to}"
+			total_pods = k8sclient.getTotalPods('default').count
+			if total_pods < scale_to
+				puts "Scale up"
+				scal.scaleActions(target_rc, scale_to)
+				sleep 180
+			elsif total_pods > scale_to
+				puts "Scale down"
+				scal.scaleActions(target_rc, scale_to)
+				sleep 300
+			else
+				sleep 60
+			end
 
-		rawcpu.clear
-		pod_cpu.clear
+			rawcpu.clear
+			pod_cpu.clear
 
 	end
 #agent = Agent.new
