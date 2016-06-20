@@ -3,8 +3,8 @@ influxdb_development:
   databasename: k8s
   username: root
   password: root
-  server: 23.236.58.68
-  port: 8086
+  server: 104.199.152.95
+  port: 31876
 influxdb_production:
   adapter: influxdb
   databasename: metrics_db

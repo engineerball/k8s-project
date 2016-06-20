@@ -18,14 +18,14 @@ class K8sclient
 		kubeconfig = YAML.load_file('/home/vagrant/.kube/config')
 		clusters = kubeconfig['clusters']
 		clusters.each_with_index {|val, index| cluster = val }
-		@ca =  cluster['cluster']['certificate-authority-data'] 
+		@ca =  cluster['cluster']['certificate-authority-data']
 		users = kubeconfig['users']
-		users.each_with_index do |val,index|  
-						unless val['user']['client-certificate-data'].nil? || @client_cert = val['user']['client-certificate-data'] 
+		users.each_with_index do |val,index|
+						unless val['user']['client-certificate-data'].nil? || @client_cert = val['user']['client-certificate-data']
 						end
 		end
-		users.each_with_index do |val,index|  
-						unless val['user']['client-key-data'].nil? || @client_key = val['user']['client-key-data'] 
+		users.each_with_index do |val,index|
+						unless val['user']['client-key-data'].nil? || @client_key = val['user']['client-key-data']
 						end
 		end
 
@@ -35,11 +35,11 @@ class K8sclient
 		}
 
 		@auth_options = {
-		    password: 'dS6z2MLZ6yPEGovO',
+		    password: 'HQtBwDSEk4eLG8tc',
 		    username: 'admin'
 		}
 
-		@CLIENT = Kubeclient::Client.new 'https://146.148.82.110/api/', "v1", ssl_options: ssl_options, auth_options: @auth_options
+		@CLIENT = Kubeclient::Client.new $k8s_api, "v1", ssl_options: ssl_options, auth_options: $k8s_auth
 	end
 
 	def getTotalRC(rc_name, rc_namespace = 'default')
@@ -70,5 +70,6 @@ class K8sclient
 		return cpu_core
 	end
 
-#End class	
+
+#End class
 end

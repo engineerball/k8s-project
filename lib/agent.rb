@@ -1,14 +1,14 @@
 require 'json'
 require 'daemons'
+require 'exponential_backoff'
 require_relative 'heapster'
 require_relative 'influxdb'
 require_relative 'Agent'
 
 class Agent
 
-	def initialize(auth_options)
-		@auth_options = auth_options
-		@heapster = Heapster.new auth_options
+	def initialize()
+		@heapster = Heapster.new
 		@influxdb = Influxdb.new
 		@k8sclient = K8sclient.new
 	end
@@ -17,12 +17,12 @@ class Agent
 		@influxdb.writeQuery(data)
   end
 
-	def startNodesAgent(functionname) 
-		data = Hash.new 
+	def startNodesAgent(functionname)
+		data = Hash.new
 		data = {
 			'type' => 'nodes',
 			'metrics' => @heapster.send(functionname)
-		}     
+		}
   	writeDB(data)
 	end
 
@@ -36,10 +36,24 @@ class Agent
 	end
 
 	def getPodsCPUUsage(pods_label)
-		data = Hash.new(0)
-		data = @influxdb.getPodsCPUUsagePercentByPod(pods_label)
+		pod = @k8sclient.getTotalPods(pods_label)
+		pod_data = Hash.new(0)
+		pod.each do |index, pod_name|
+			pod_name =~ /(.*)-(.*)?/
+			pods_filter = $1
 
-		return data
+			query = "SELECT pod_name, value FROM \"cpu\/usage\" WHERE pod_name =~ /.*#{pods_filter}.*/ AND time > now() - 150s GROUP BY pod_name ORDER BY time DESC LIMIT 2"
+			data = @influxdb.query(query)
+			result = data['results'][0]['series']
+			 result.each_with_index do |(key, value), index|
+			   pod_name = key['tags']['pod_name']
+				 key['values'][0][1]
+			   cpu_delta = key['values'][0][1] - key['values'][1][1]
+				 pod_data[pod_name] = cpu_delta
+			 end
+		end
+		cpu_usage_metric = calculateCPUUsage(pod_data)
+		return cpu_usage_metric
 	end
 
 	def calculateCPUUsage(data_metric)
@@ -71,30 +85,47 @@ class Agent
 		return average
 	end
 
+	def getPodsCPUUsagePercentByPods(pods_name)
+		data = Hash.new(0)
+		query = "SELECT value FROM \"cpu\/usage\" where pod_name =~ /.*#{pods_name}.*/ and time > now() - 150s GROUP BY  pod_name ORDER BY time DESC LIMIT 2"
+		result = @influxdb.makeHttpRequest(query)
+		result[0]['points'].each do |time, value, pod_name|
+		 	data[pod_name] = value
+		end
+		return data
+	end
+
 	def adjustTime(podname)
 		dataset = Array.new(0)
-		p dataset = @influxdb.getPodsCPUUsagePercentByPod(podname)
-		epoch_time = 0
-		item = 0
-		if dataset[0]
-			dataset[0]['points'].each  do |time, value|
-				if value
-					item +=1
+
+		minimal_interval = 0.0
+		maximal_elapsed_time = 60.0
+
+		backoff = ExponentialBackoff.new(minimal_interval, maximal_elapsed_time)
+		p backoff
+		backoff.intervals.each do |interval|
+			p dataset = @influxdb.getPodsCPUUsagePercentByPod(podname)
+			item = 0
+			if dataset[0]
+				dataset[0]['points'].each  do |time, value|
+					if value
+						item +=1
+					end
 				end
+			else
+				puts "dataset is nil"
 			end
-		else
-			puts "dataset is nil"
-		end
-		
-		puts "Total item = #{item}"
-		
-		if item.to_i % 2 == 1 or item == 0
-			puts "Sleep 30"
-			sleep 30
-			return false
-		elsif item.to_i % 2 == 0
-			#sleep 60
-			return true
+
+			puts "Total item = #{item}"
+
+			if item.to_i % 2 == 1 or item == 0
+				puts "Sleep #{interval}"
+				sleep interval
+				return false
+			elsif item.to_i % 2 == 0
+				return true
+				break
+			end
 		end
 	end
 

@@ -2,7 +2,8 @@ require 'yaml'
 
 config_influxdb = YAML.load_file('conf/database.yaml')
 config_redis = YAML.load_file('conf/redis.yaml')
-		
+config = YAML.load_file('conf/config.yaml')
+
 if @environment == 'production'
 	$influxdb_server = config_influxdb['influxdb_production']['server']
 	$influxdb_username = config_influxdb['influxdb_production']['username']
@@ -31,3 +32,8 @@ else
 	$REDIS_HOST = config_redis['development']['server']
 	$REDIS_PORT = config_redis['development']['port']
 end
+
+$k8s_api = config['k8smaster']['api']
+$k8s_username = config['k8smaster']['username']
+$k8s_password = config['k8smaster']['password']
+$k8s_auth = {password: $k8s_password, username: $k8s_username}

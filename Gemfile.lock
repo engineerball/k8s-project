@@ -10,6 +10,7 @@ GEM
     daemons (1.2.3)
     domain_name (0.5.20160310)
       unf (>= 0.0.5, < 1.0.0)
+    exponential-backoff (0.0.2)
     http (0.9.8)
       addressable (~> 2.3)
       http-cookie (~> 1.0)
@@ -47,6 +48,7 @@ PLATFORMS
 
 DEPENDENCIES
   daemons
+  exponential-backoff
   kubeclient
   redis
 

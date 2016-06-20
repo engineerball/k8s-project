@@ -7,8 +7,9 @@ require 'uri'
 class Influxdb
 
 	def initialize()
-		@influxdb = InfluxDB::Client.new host: $influxdb_server, port: $influxdb_port, database: $influxdb_database, username: $influxdb_username, password: $influxdb_password 
-		@influxdb_http_uri = "http://#{$influxdb_server}:#{$influxdb_port}/db/#{$influxdb_database}/series?u=#{$influxdb_username}&p=#{$influxdb_password}"
+		#@influxdb = InfluxDB::Client.new host: $influxdb_server, port: $influxdb_port, database: $influxdb_database, username: $influxdb_username, password: $influxdb_password
+		@influxdb_http_uri = "http://#{$influxdb_server}:#{$influxdb_port}/query?u=#{$influxdb_username}&p=#{$influxdb_password}&db=#{$influxdb_database}"
+		@influxdb_http_uri = "https://104.197.65.76/api/v1/proxy/namespaces/kube-system/services/monitoring-influxdb:8086/query?u=#{$influxdb_username}&p=#{$influxdb_password}&db=#{$influxdb_database}"
 		@time_select = 0
 	end
 
@@ -17,12 +18,14 @@ class Influxdb
 	end
 
 
-	def makeHttpRequest(uri)
-		 uri = URI.encode(uri)
+	def makeHttpRequest(query)
+		 query = URI.encode(query)
 		 data = Hash.new(0)
 		 request = Typhoeus::Request.new(
-		  "#{@influxdb_http_uri}&q=#{uri}",
+		  "#{@influxdb_http_uri}&q=#{query}",
 		  method: :get,
+			ssl_verifypeer: false,
+			userpwd: "#{$k8s_username}:#{$k8s_password}"
 		  #body: {content: "q=#{data}"},
 		  #headers: {'Content-Type'=> "application/x-www-form-urlencoded"},
 		)
@@ -34,37 +37,42 @@ class Influxdb
 		return result
 	end
 
-	def writeQuery(data)
-		name = nil
-		cpu = nil
-		memory = nil
-		precission = 'm'
-		retention = '1h.cpu'
+	# def writeQuery(data)
+	# 	name = nil
+	# 	cpu = nil
+	# 	memory = nil
+	# 	precission = 'm'
+	# 	retention = '1h.cpu'
+	#
+	# 	type = data['type']
+	# 	metrics = data['metrics']
+	# 	metrics.each do |key,value|
+	# 		name = key['name']
+	# 		cpu = key['cpuUsage']
+	# 		memory = key['memUsage']
+	#
+	# 		data = [
+	# 			{
+	# 				series: 'cpu',
+	#     		tags: { host: name, type: type },
+	#     		values: { value: cpu }
+	# 			},
+	# 			{
+	# 				series: 'memory',
+	# 				tags: { host: name, type: type },
+	# 				values: { value: memory }
+	# 			}
+	# 		]
+	#
+	# 		@influxdb.write_points(data, precission)
+	#
+	# 	end
+	# end
 
-		type = data['type']
-		metrics = data['metrics']
-		metrics.each do |key,value|
-			name = key['name']
-			cpu = key['cpuUsage']
-			memory = key['memUsage']
-
-			data = [
-				{
-					series: 'cpu',
-	    		tags: { host: name, type: type },
-	    		values: { value: cpu }
-				},
-				{
-					series: 'memory',
-					tags: { host: name, type: type },
-					values: { value: memory }
-				}
-			]
-
-			@influxdb.write_points(data, precission)
-
-		end
-		
+	def query(sql)
+		#result = @influxdb.query sql
+		result = makeHttpRequest sql
+		return result
 	end
 
 	def getQueryMetric(metric, type)
@@ -117,9 +125,9 @@ class Influxdb
 		else
 			puts "dataset is nil"
 		end
-		
+
 		puts "Total item = #{item}"
-		
+
 		if item.to_i % 2 == 1
 			puts "Sleep 30"
 			sleep 30

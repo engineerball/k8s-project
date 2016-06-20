@@ -1,6 +1,6 @@
+require_relative 'instance'
 require_relative 'k8s-client'
 require_relative 'heapster'
 require_relative 'agent'
 require_relative 'scaling'
-require_relative 'instance'
 require_relative 'influxdb'

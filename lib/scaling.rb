@@ -15,7 +15,7 @@ class Scaling
 		u = load_avg.to_f / time_interval
 		# Second derivative of current load average
 		a = load_avg.to_f / (time_interval ** 2)
-		# Prediction future load 
+		# Prediction future load
 		s = (u * t) + 0.5 * a ** t
 
 		puts "load_avg = #{load_avg}
@@ -58,7 +58,7 @@ class Scaling
 			end
 			# Update current_metric
 			#current_metric = @@influxclient.getQueryMetric(metric_type, node_type)
-			@@redis.set('current_metric', current_metric)			
+			@@redis.set('current_metric', current_metric)
 			sleep 30
 		end
 
@@ -87,7 +87,7 @@ class Scaling
 	def getNumberScaleUp(data_metric, target = 100)
 		target_num_of_pods = 1
 		current_pods_cpu_utilization = 0
-		
+
 		if data_metric
 			data_metric.each do |pod, cpu|
 				current_pods_cpu_utilization += cpu
@@ -100,6 +100,11 @@ class Scaling
 			target_num_of_pods = 1
 		end
 		return target_num_of_pods
+	end
+
+	def scaleActions(rc_name, target_pods = 1)
+		puts cmd = "kubectl scale --replicas=#{target_pods} rc #{rc_name}"
+		#result = `#{cmd}`
 	end
 
 	#End class

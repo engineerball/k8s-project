@@ -1,7 +1,7 @@
 require_relative 'lib/include'
 
 auth_options = {
-		    password: 'fdYveJAxWvNvbqNc',
+		    password: 'HQtBwDSEk4eLG8tc',
 		    username: 'admin'
 		}
 

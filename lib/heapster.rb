@@ -4,11 +4,10 @@ require 'net/http'
 require 'net/https'
 
 class Heapster
-	@auth_options
-	def initialize(auth_options)
-		@kubernates_api = 'https://104.154.39.146/api/v1/'
-		@heapster_api_uri = 'https://104.154.39.146/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/'
-		@auth_options = auth_options
+	def initialize()
+		@kubernates_api = "#{$k8s_api}v1/"
+		@heapster_api_uri = "#{@kubernates_api}/proxy/namespaces/kube-system/services/heapster/api/v1/"
+		@auth_options = $k8s_auth
 	end
 
 	def getHeapsterModelMetrics()
